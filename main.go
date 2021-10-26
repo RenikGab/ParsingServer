@@ -50,8 +50,8 @@ func main() {
 	Log = log.New(multi, "INFO: ", log.Ldate|log.Lmicroseconds|log.Lshortfile)
 	Log.Println("Start logging...")
 	Log.Println(runtime.GOOS)
-	downloadScript := `service\linux\download.sh`
-	gitScript := `service\linux\git.sh`
+	downloadScript := `service/linux/download.sh`
+	gitScript := `service/linux/git.sh`
 	if runtime.GOOS == "windows" {
 		downloadScript = `.\service\win\download.bat`
 		gitScript = `.\service\win\git.bat`
