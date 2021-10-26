@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -12,6 +13,8 @@ import (
 type record struct {
 	Date string `json:"date"`
 }
+
+var Log *log.Logger
 
 func getLastDate() time.Time {
 	content, err := ioutil.ReadFile("./download/coronaparsing/docs/data/12/data.json")
@@ -23,15 +26,15 @@ func getLastDate() time.Time {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println(len(data))
-	//fmt.Println(data[len(data)-1].Date)
+	//Log.Println(len(data))
+	//Log.Println(data[len(data)-1].Date)
 	last, err := time.Parse("060102", data[len(data)-1].Date)
-	fmt.Println("getLastDate", last)
+	Log.Println("getLastDate", last)
 	return last
 }
 
 func execute(name string) {
-	fmt.Println("execute", name)
+	Log.Println("execute", name)
 	cmd := exec.Command(name)
 	err := cmd.Run()
 	if err != nil {
@@ -40,7 +43,13 @@ func execute(name string) {
 }
 
 func main() {
-	fmt.Println("He")
+	logFile, _ := os.OpenFile("logFile", os.O_RDWR|os.O_CREATE, 0666)
+	multi := io.MultiWriter(logFile, os.Stdout)
+	Log = log.New(multi, "INFO: ", log.Ldate|log.Lmicroseconds|log.Lshortfile)
+	Log.Println("Start logging...")
+
+	defer logFile.Close()
+
 	/*{
 		today := time.Now()
 		tomorrow := today.AddDate(0, 0, 1)
@@ -52,24 +61,24 @@ func main() {
 		s[15] = '0'
 		ss = string(s)
 		tommmorowNine, _ := time.Parse("2006-01-02 15:04", ss)
-		fmt.Println(tommmorowNine)
-		fmt.Println(tommmorowNine.Sub(today))
+		Log.Println(tommmorowNine)
+		Log.Println(tommmorowNine.Sub(today))
 	}
 	return*/
 	for {
 		// Проверка текущей даты
 		today := time.Now()
-		fmt.Println(today)
-		//fmt.Println(today.Date())
-		//fmt.Println(today.Clock())
+		Log.Println(today)
+		//Log.Println(today.Date())
+		//Log.Println(today.Clock())
 		// Проверка даты последней записи
 		last := getLastDate()
-		fmt.Println(last)
+		Log.Println(last)
 
 		diff := today.Sub(last)
 		next := last.Add(time.Hour * 24)
-		fmt.Println("diff", diff)
-		fmt.Println("next", next)
+		Log.Println("diff", diff)
+		Log.Println("next", next)
 
 		// Если нужны новые данные
 		//if diff > time.Hour*24*2 {
@@ -77,19 +86,19 @@ func main() {
 			// Если нужны данные только за сегодня
 			// Запускаем парсинг
 			for {
-				fmt.Println("today")
+				Log.Println("today")
 				execute(`.\service\win\download.bat`)
 				// Если данных нет - повтор через час
 				if last != getLastDate() {
 					break
 				}
-				fmt.Println("sleep 1 hour")
+				Log.Println("sleep 1 hour")
 				time.Sleep(time.Hour)
 			}
 			// Если есть - ждем до завтра до 9 часов
 		} else {
 			// Если данные нужны не только за сегодня
-			fmt.Println("a few days")
+			Log.Println("a few days")
 			// Повторяем процедуру пока не останутся данные только за сегодня
 			for next.Before(today) {
 				// Запускаем парсинг
@@ -100,15 +109,15 @@ func main() {
 				}
 				next = next2
 				// ждем 30 секунд
-				fmt.Println("sleep 30 sec")
+				Log.Println("sleep 30 sec")
 				time.Sleep(30 * time.Second)
 			}
 		}
 		// Если новые данные появились делаем git commit
-		/*last2 := getLastDate()
+		last2 := getLastDate()
 		if last2 != last {
 			execute(`.\service\win\git.bat`)
-		}*/
+		}
 
 		// ждем до завтра до 9 часов
 		tomorrow := today.AddDate(0, 0, 1)
@@ -123,7 +132,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("sleep", tommmorowNine)
+		Log.Println("sleep", tommmorowNine)
 		time.Sleep(tommmorowNine.Sub(today))
 	}
 }
