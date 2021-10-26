@@ -1,3 +1,3 @@
 #! /bin/bash
-cd download/coronaparsing
+cd download/coronaParsing
 node index
