@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -47,6 +48,13 @@ func main() {
 	multi := io.MultiWriter(logFile, os.Stdout)
 	Log = log.New(multi, "INFO: ", log.Ldate|log.Lmicroseconds|log.Lshortfile)
 	Log.Println("Start logging...")
+	Log.Println(runtime.GOOS)
+	downloadScript := `.\service\linux\download.sh`
+	gitScript := `.\service\linux\git.sh`
+	if runtime.GOOS == "windows" {
+		downloadScript = `.\service\win\download.bat`
+		gitScript = `.\service\win\git.bat`
+	}
 
 	defer logFile.Close()
 
@@ -87,7 +95,7 @@ func main() {
 			// Запускаем парсинг
 			for {
 				Log.Println("today")
-				execute(`.\service\win\download.bat`)
+				execute(downloadScript)
 				// Если данных нет - повтор через час
 				if last != getLastDate() {
 					break
@@ -102,7 +110,7 @@ func main() {
 			// Повторяем процедуру пока не останутся данные только за сегодня
 			for next.Before(today) {
 				// Запускаем парсинг
-				execute(`.\service\win\download.bat`)
+				execute(downloadScript)
 				next2 := getLastDate().Add(time.Hour * 24)
 				if next2 == next {
 					break
@@ -116,7 +124,7 @@ func main() {
 		// Если новые данные появились делаем git commit
 		last2 := getLastDate()
 		if last2 != last {
-			execute(`.\service\win\git.bat`)
+			execute(gitScript)
 		}
 
 		// ждем до завтра до 9 часов
