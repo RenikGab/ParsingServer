@@ -18,7 +18,7 @@ type record struct {
 var Log *log.Logger
 
 func getLastDate() time.Time {
-	content, err := ioutil.ReadFile("./download/coronaparsing/docs/data/12/data.json")
+	content, err := ioutil.ReadFile("/download/coronaParsing/docs/data/12/data.json")
 
 	if err != nil {
 		log.Fatal(err)
